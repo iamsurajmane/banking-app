@@ -7,6 +7,10 @@ import com.example.demo.repository.AccountRepository;
 import com.example.demo.service.AccountService;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
 @Service
 public class AccountServiceImpl implements AccountService {
 
@@ -35,6 +39,13 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
+    public List<AccountDto> getAllAccounts() {
+        List<Account> allAccounts = accountRepository.findAll();
+        return allAccounts.stream().map((account)-> AccountMapper.mapToAccountDto(account)
+                ).collect(Collectors.toList());
+    }
+
+    @Override
     public AccountDto deposit(Long id, double amount) {
         Account account = accountRepository
                 .findById(id)
@@ -44,6 +55,28 @@ public class AccountServiceImpl implements AccountService {
         Account savedAccount = accountRepository.save(account);
 
         return AccountMapper.mapToAccountDto(savedAccount);
+    }
+
+    @Override
+    public AccountDto withdraw(Long id, double amount) {
+        Account account = accountRepository
+                .findById(id)
+                .orElseThrow(()->new RuntimeException("Account does not exists!!"));
+        if(account.getBalance() < amount){
+            throw new RuntimeException("Insufficient Balance!!");
+        }
+        double total = account.getBalance() - amount;
+        account.setBalance(total);
+        Account savedAccount = accountRepository.save(account);
+        return AccountMapper.mapToAccountDto(savedAccount);
+    }
+
+    @Override
+    public void deleteAC(Long id) {
+        Account account = accountRepository
+                .findById(id)
+                .orElseThrow(()->new RuntimeException("Account does not exists!!"));
+        accountRepository.deleteById(id);
     }
 
 
